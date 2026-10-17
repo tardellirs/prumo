@@ -3,6 +3,7 @@
 non-chord tones and absent chord tones; the lowest sounding note counts extra as the likely root/bass).
 Triggered by structure: a list of notes with start/end times and options that carry pitch-class sets."""
 from prumo_rules.common import crit_text, from_scores
+from prumo_rules.params import P as PRM
 
 NOTE_KEYS = ("context_notes", "notes")
 TIME_KEYS = ("target_time_beats", "target_beat", "time_beats")
@@ -35,16 +36,16 @@ def solve(state, questions):
                 a, b, p = float(n["start_beat"]), float(n["end_beat"]), int(n["pitch"])
             except (KeyError, TypeError, ValueError):
                 continue
-            ov = max(0.0, min(b, t + 1.0) - max(a, t))
+            ov = max(0.0, min(b, t + PRM["music.window_beats"]) - max(a, t))
             if ov > 0:
                 sounding.append((p, ov))
         if not sounding:
             if none_opt:
-                out[k] = from_scores({o: (1.0 if o in none_opt else 0.0) for o in q["criteria"]}, temp=0.3)
+                out[k] = from_scores({o: (1.0 if o in none_opt else 0.0) for o in q["criteria"]}, temp=PRM["music.temperature_none"])
             continue
         low = min(p for p, _ in sounding)
         for p, ov in sounding:
-            w[p % 12] += ov * (1.5 if p == low else 1.0)
+            w[p % 12] += ov * (PRM["music.bass_weight"] if p == low else 1.0)
         tot = sum(w)
         mean_w = tot / max(1, sum(1 for x in w if x > 0))
         sc = {}
@@ -52,8 +53,8 @@ def solve(state, questions):
             s = sorted(set(int(p) % 12 for p in pcs))
             inside = sum(w[p] for p in s)
             missing = sum(1 for p in s if w[p] == 0)
-            sc[o] = (inside - 0.5 * (tot - inside) - 0.5 * missing * mean_w) / tot
+            sc[o] = (inside - PRM["music.outside_penalty"] * (tot - inside) - PRM["music.missing_penalty"] * missing * mean_w) / tot
         for o in other:
-            sc[o] = -1.0
-        out[k] = from_scores(sc, temp=0.05)
+            sc[o] = PRM["music.other_score"]
+        out[k] = from_scores(sc, temp=PRM["music.temperature"])
     return out or None

@@ -12,6 +12,7 @@ import warnings
 
 from prumo_rules import sandbox
 from prumo_rules.common import bool_answer, crit_text, peaked, yes_no_keys
+from prumo_rules.params import P as PRM
 
 CODE_KEYS = ("code", "function", "program", "source", "snippet")
 TEST_KEYS = ("tests", "test", "test_code", "unit_tests", "test_cases")
@@ -105,7 +106,7 @@ def solve(state, questions):
             r = sandbox.run({"mode": "tests", "code": code, "tests": tests, "entry": entry})
             if not r.get("ok"):
                 continue
-            ans = bool_answer(q, bool(r.get("passes")), 0.97)
+            ans = bool_answer(q, bool(r.get("passes")), PRM["code.mass"])
             if ans:
                 out[key] = ans
         elif inp is not None and q["type"] == "choice":
@@ -118,5 +119,5 @@ def solve(state, questions):
                 continue
             hits = [k for k, m in zip(keys, r["matches"]) if m]
             if hits and len(hits) < len(keys):
-                out[key] = peaked(keys, hits, 0.97)
+                out[key] = peaked(keys, hits, PRM["code.mass"])
     return out or None

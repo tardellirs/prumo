@@ -2,6 +2,7 @@
 normalised per opinion, between each candidate and every participant's opinion (IDF over the candidates)."""
 from prumo_rules.common import crit_text, from_scores
 from prumo_rules.textmatch import bm25_scores
+from prumo_rules.params import P as PRM
 
 OPINION_KEYS = ("participant_opinions", "opinions", "participant_statements", "responses", "views")
 
@@ -24,5 +25,5 @@ def solve(state, questions):
             m = max(sc) or 1.0
             for o, s in zip(keys, sc):
                 tot[o] += s / m
-        out[k] = from_scores({o: v / len(ops) for o, v in tot.items()}, temp=0.1)
+        out[k] = from_scores({o: v / len(ops) for o, v in tot.items()}, temp=PRM["consensus.temperature"])
     return out or None

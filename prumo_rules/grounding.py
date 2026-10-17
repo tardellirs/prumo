@@ -6,8 +6,9 @@ supported / unsupported (hallucinated). Thresholds fixed a priori.
 import re
 
 from prumo_rules.common import crit_text, peaked, tokens
+from prumo_rules.params import P as PRM
 
-COVER = 0.7  # chosen on HoVer + RAGTruth train splits (0.6-0.9 tried)
+COVER = PRM["grounding.coverage"] # chosen on HoVer + RAGTruth train splits (0.6-0.9 tried)
 CLAIM_KEYS = ("claim", "statement", "hypothesis")
 EVIDENCE_KEYS = ("evidence", "evidences", "context", "passages", "documents", "sources")
 RESPONSE_KEYS = ("response", "answer", "output", "summary", "reply")
@@ -66,13 +67,13 @@ def solve(state, questions):
         ins = crit_text(q.get("instructions")).lower()
         if q["type"] == "noul":
             if NEG_Q.search(ins):
-                out[k] = {"noul": 0.3 if ok else 0.7}
+                out[k] = {"noul": PRM["grounding.noul_low"] if ok else PRM["grounding.noul_high"]}
             elif re.search(r"\bsupported\b|\bfaithful\b|\bgrounded\b|\bbacked\b", ins):
-                out[k] = {"noul": 0.7 if ok else 0.3}
+                out[k] = {"noul": PRM["grounding.noul_high"] if ok else PRM["grounding.noul_low"]}
             continue
         opts = {o: (o + " " + crit_text(v)).lower() for o, v in q["criteria"].items()}
         neg = [o for o, v in opts.items() if re.search(r"not[ _]supported|does not support|refute|unsupported|hallucinat|not[ _]enough|contradict", v)]
         pos = [o for o in opts if o not in neg]
         if len(neg) == 1 and len(pos) == 1:
-            out[k] = peaked(list(opts), pos if ok else neg, 0.65)
+            out[k] = peaked(list(opts), pos if ok else neg, PRM["grounding.mass"])
     return out or None

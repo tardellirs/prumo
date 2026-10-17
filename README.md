@@ -41,7 +41,7 @@ model-index:
 **A decision engine with zero learned parameters. It computes what can be computed and abstains, by construction, from everything else.**
 
 [![Public index](https://img.shields.io/badge/Decision%20Index%200.3-public%2020.14-2a78d6)](#results)
-[![Size](https://img.shields.io/badge/size-700%20hand--set%20constants%20%C2%B7%200%20learned-eb6834)](#what-it-is)
+[![Size](https://img.shields.io/badge/size-527%20hand--set%20parameters%20%C2%B7%200%20learned-eb6834)](#what-it-is)
 [![Hardware](https://img.shields.io/badge/hardware-1%20CPU%20thread-555)](#latency)
 [![Deterministic](https://img.shields.io/badge/deterministic-bit--identical%20across%20OS-555)](#determinism)
 [![License](https://img.shields.io/badge/license-Apache--2.0-555)](#license)
@@ -90,7 +90,7 @@ it: this much of the public Decision Index is reachable **without learning anyth
 | | |
 |---|---|
 | **Kind** | rule-based, symbolic; **0 learned parameters** |
-| **Size** | **700** hand-written constants (the number to use on a size axis); no weights, no embeddings |
+| **Size** | **527** hand-set numeric parameters, all in [`constants.safetensors`](constants.safetensors) (the size the Hub reports); no weights, no embeddings |
 | **Input / output** | Decision Index wire format: `state` + `questions` (`choice`, `noul`) → a probability for every option |
 | **Runtime** | CPython ≥ 3.10, one CPU thread; dependency: [`chess==1.11.2`](https://pypi.org/project/chess/) (move generation only) |
 | **Code** | ~2.7k lines (`prumo_rules/`), Apache-2.0 |
@@ -271,13 +271,19 @@ They pass on macOS and on Linux.
 
 ## Transparency
 
-- **No learned values.** There are about 700 hand-written constants:
-  - chess piece values and textbook piece-square tables;
-  - stop-word and phrase lists;
+- **No learned values.** Every number that shapes a decision is one of the **527 hand-set parameters** in
+  [`constants.safetensors`](constants.safetensors). The engine loads them at start-up (`prumo_rules/params.py`, standard
+  library only, F64, so the values are bit-exact). [`tools/make_constants.py`](tools/make_constants.py) is their
+  human-readable source, with a comment on each. The file holds:
+  - 454 chess values: piece values plus seven textbook piece-square tables;
+  - search constants;
+  - the code, arithmetic and sandbox budgets;
   - BM25 `k1 = 1.2`, `b = 0.75`;
-  - thresholds such as grounding coverage 0.7.
+  - every threshold, weight, temperature and confidence mass.
 
-  The thresholds that could not be fixed a priori were chosen on **training/dev splits** of the source datasets and
+  The file is not a model; it is the engine's configuration, kept where the size can be counted. Word lists (stop
+  words, phrase lists, month and number words) and structural constants (board geometry, the calendar, the 12 pitch
+  classes, text-length limits) stay in code. The thresholds that could not be fixed a priori were chosen on **training/dev splits** of the source datasets and
   on our own panels, never on the public test.
 - **Removed before release.** An earlier prototype scored 24.81 on the public index, but it had parsers keyed to the
   fixed wording of particular benchmarks, and a few rules inspired by reading errors on the public test. All of them

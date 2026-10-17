@@ -9,6 +9,7 @@ import math
 
 from prumo_rules.common import crit_text, peaked, tokens, uniq, yes_no_keys
 from prumo_rules.textmatch import bm25_scores
+from prumo_rules.params import P as PRM
 
 QUERY_KEYS = ("query", "search_query", "search", "question", "claim", "information_need")
 
@@ -55,11 +56,11 @@ def _grade(state, q):
     irr = [k for k, v in opts.items() if v.startswith(("irrelevant", "not relevant"))]
     if len(exact) != 1 or len(irr) != 1:
         return None
-    if cov >= 0.5:
-        return peaked(list(opts), exact, 0.6)
+    if cov >= PRM["retrieval.coverage_exact"]:
+        return peaked(list(opts), exact, PRM["retrieval.mass_exact"])
     if cov == 0:
-        return peaked(list(opts), irr, 0.6)
-    return peaked(list(opts), exact, 0.45)
+        return peaked(list(opts), irr, PRM["retrieval.mass_irrelevant"])
+    return peaked(list(opts), exact, PRM["retrieval.mass_partial"])
 
 
 def solve(state, questions):
@@ -81,8 +82,8 @@ def solve(state, questions):
         keys = list(cands)
         sc = bm25_scores(query, [cands[k][0] for k in keys])
         for k, s in zip(keys, sc):
-            p = 1 - math.exp(-s / 8.0)
-            p = min(0.98, max(0.02, 0.02 + 0.96 * p))
+            p = 1 - math.exp(-s / PRM["retrieval.decay"])
+            p = min(PRM["retrieval.p_ceiling"], max(PRM["retrieval.p_floor"], PRM["retrieval.p_floor"] + PRM["retrieval.p_span"] * p))
             yes, no = cands[k][1]
             out[k] = {yes: p, no: 1 - p}
     return out or None

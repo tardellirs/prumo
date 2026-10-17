@@ -22,9 +22,10 @@ import re
 
 from prumo_rules.common import crit_text, from_scores, peaked, tokens, uniq
 from prumo_rules.textmatch import bm25_scores
+from prumo_rules.params import P as PRM
 
-NEAR = 0.5             # per-tool yes/no: "best-ranked" band (chosen on BFCL-style train sets + SS-dev; see README)
-LAST_WEIGHT = 4        # the latest user turn adds 4x its own BM25 (recency; chosen on API-Bank train)
+NEAR = PRM["tools.near"]            # per-tool yes/no: "best-ranked" band (chosen on BFCL-style train sets + SS-dev; see README)
+LAST_WEIGHT = int(PRM["tools.last_weight"])       # the latest user turn adds 4x its own BM25 (recency; chosen on API-Bank train)
 REFUSE = ("sorry", "unable", "can't", "cannot", "can not", "not able", "don't have", "do not have", "no tool", "none of the",
           "not possible", "i'm afraid", "apologies", "not capable", "no way to", "isn't possible", "not available")
 TURN_TEXT = ("content", "text", "message", "utterance", "value")
@@ -218,7 +219,7 @@ def related(u, tool, mode=None):
     return False
 
 
-RELATED = 4
+RELATED = int(PRM["tools.related"])
 DEFAULT_OK = False
 
 
@@ -251,7 +252,7 @@ def stated(value, text):
     tt = set(tokens(text, keep_stop=True))
     if not tv:
         return False
-    return len(tv & tt) / len(tv) >= 0.5 or any(len(w) >= 4 and w in tt for w in tv)
+    return len(tv & tt) / len(tv) >= PRM["tools.stated_overlap"] or any(len(w) >= 4 and w in tt for w in tv)
 
 
 def reply_choice(state, q, tools):
@@ -265,14 +266,14 @@ def reply_choice(state, q, tools):
     cannot = kinds.get("cannot") or kinds.get("direct", [])
     u = " ".join(user_turns(state))
     if not tools:
-        return peaked(keys, cannot, 0.85)
+        return peaked(keys, cannot, PRM["tools.mass_no_catalog"])
     call_key = kinds["call"][0]
     call = opts[call_key][1] if isinstance(opts[call_key][1], dict) else {}
     names = {norm_name(t["name"]): t for t in tools}
     tool = names.get(norm_name(call.get("name", ""))) if call.get("name") else None
     if tool is None or not related(u, tool):
         # no valid call can be made with this catalog for this request
-        return peaked(keys, cannot or kinds.get("ask", []), 0.8)
+        return peaked(keys, cannot or kinds.get("ask", []), PRM["tools.mass_reply"])
     args = call.get("arguments", call.get("parameters", {}))
     if isinstance(args, str):
         try:
@@ -283,8 +284,8 @@ def reply_choice(state, q, tools):
     dflt = defaults(tool)
     missing = [p for p in required_params(tool) if not (stated(args.get(p), u) or (DEFAULT_OK and p in args and p in dflt and args[p] == dflt[p]))]
     if missing and "ask" in kinds:
-        return peaked(keys, kinds["ask"], 0.8)
-    return peaked(keys, [call_key], 0.8)
+        return peaked(keys, kinds["ask"], PRM["tools.mass_reply"])
+    return peaked(keys, [call_key], PRM["tools.mass_reply"])
 
 
 YES_CALL = ("yes", "call", "invoke", "use", "true", "required", "needed")
@@ -326,7 +327,7 @@ def solve(state, questions):
             continue
         opt_names = {o: norm_name(crit_text(v)) for o, v in q["criteria"].items()}
         if tools and all(n in by for n in opt_names.values()):
-            out[k] = from_scores({o: sc[by[n]] for o, n in opt_names.items()}, temp=0.5)
+            out[k] = from_scores({o: sc[by[n]] for o, n in opt_names.items()}, temp=PRM["tools.temperature"])
             continue
         r = reply_choice(state, q, tools)
         if r:
@@ -338,9 +339,9 @@ def solve(state, questions):
             call = len(tools) == 1 or (best > 0 and s >= NEAR * best)
             q = questions[k]
             if q["type"] == "noul":
-                out[k] = {"noul": 0.85 if call else 0.15}
+                out[k] = {"noul": PRM["tools.call_high"] if call else PRM["tools.call_low"]}
                 continue
             yn = _call_keys(q)
             if yn:
-                out[k] = peaked(list(q["criteria"]), [yn[0] if call else yn[1]], 0.85)
+                out[k] = peaked(list(q["criteria"]), [yn[0] if call else yn[1]], PRM["tools.call_high"])
     return out or None

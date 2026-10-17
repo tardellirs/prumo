@@ -4,9 +4,10 @@ import math
 from collections import Counter
 
 from prumo_rules.common import tokens, uniq
+from prumo_rules.params import P as PRM
 
 
-def bm25_scores(query, docs, k1=1.2, b=0.75):
+def bm25_scores(query, docs, k1=PRM["bm25.k1"], b=PRM["bm25.b"]):
     """query: str; docs: list[str] -> list[float]. IDF from these docs only."""
     q = uniq(tokens(query))
     dt = [tokens(d) for d in docs]
@@ -22,7 +23,7 @@ def bm25_scores(query, docs, k1=1.2, b=0.75):
         for w in q:
             if w not in tf:
                 continue
-            idf = math.log(1 + (n - df[w] + 0.5) / (df[w] + 0.5))
+            idf = math.log(1 + (n - df[w] + PRM["bm25.idf_smoothing"]) / (df[w] + PRM["bm25.idf_smoothing"]))
             s += idf * tf[w] * (k1 + 1) / (tf[w] + k1 * (1 - b + b * len(d) / avg))
         out.append(s)
     return out

@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import re
+from prumo_rules.params import P as PRM
 
 # A short hand-written English stop-word list (no corpus statistics).
 STOP = frozenset("""a an the of to in on for and or but is are was were be been being it its this that these those with as at by
@@ -100,7 +101,7 @@ def from_scores(scores, temp=1.0):
     return {k: v / z for k, v in e.items()}
 
 
-def peaked(keys, best, mass=0.9):
+def peaked(keys, best, mass=PRM["common.peaked_mass"]):
     """`mass` on the chosen set `best`, the rest spread uniformly."""
     keys = list(keys)
     bs = set(best)
@@ -146,7 +147,7 @@ def yes_no_keys(q):
     return (yes[0], no[0]) if len(yes) == 1 and len(no) == 1 else None
 
 
-def bool_answer(q, val, mass=0.95):
+def bool_answer(q, val, mass=PRM["common.bool_mass"]):
     """Probabilities for a yes/no style question (choice with yes/no-like options, or noul)."""
     if q.get("type") == "noul":
         return {"noul": mass if val else 1 - mass}

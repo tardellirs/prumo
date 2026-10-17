@@ -6,9 +6,10 @@ import re
 from collections import Counter
 
 from prumo_rules.common import crit_text, from_scores, tokens, uniq
+from prumo_rules.params import P as PRM
 
 OOS = ("oos", "out of scope", "out-of-scope", "none of them", "none of these", "none", "other", "no match", "unknown")
-OOS_SCORE = 0.15
+OOS_SCORE = PRM["labels.oos_score"]
 MSG_KEYS = ("text", "message", "utterance", "query", "request", "user_message", "input")
 
 
@@ -62,13 +63,13 @@ def solve(state, questions):
                 continue
             hit = sum(math.log(1 + n / df[w]) for w in ws if any(_match(w, m) for m in mt))
             tot = sum(math.log(1 + n / df[w]) for w in ws)
-            sc[o] = hit / tot * (1 + 0.1 * hit) if tot else 0.0
+            sc[o] = hit / tot * (1 + PRM["labels.hit_bonus"] * hit) if tot else 0.0
         best = max(sc.values())
         if best <= 0:
             if oos:
-                out[k] = from_scores({o: (1.0 if o in oos else 0.0) for o in sc}, temp=0.3)
+                out[k] = from_scores({o: (1.0 if o in oos else 0.0) for o in sc}, temp=PRM["labels.temperature_oos"])
             continue
         for o in oos:
             sc[o] = OOS_SCORE
-        out[k] = from_scores(sc, temp=0.15)
+        out[k] = from_scores(sc, temp=PRM["labels.temperature"])
     return out or None

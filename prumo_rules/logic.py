@@ -15,6 +15,7 @@ import itertools
 import re
 
 from prumo_rules.common import crit_text, main_text, opt_texts, peaked, yes_no_keys
+from prumo_rules.params import P as PRM
 
 # ----------------------------------------------------------------------------------------- boolean expressions --
 BOOL_SPAN = re.compile(r"(?:\bnot\b|\band\b|\bor\b|\bTrue\b|\bFalse\b|[()])(?:[\s()]*(?:\bnot\b|\band\b|\bor\b|\bTrue\b|\bFalse\b|[()]))+")
@@ -92,12 +93,12 @@ def boolean(state, q):
     t_k = [k for k, v in tf.items() if v == "true"]
     f_k = [k for k, v in tf.items() if v == "false"]
     if len(t_k) == 1 and len(f_k) == 1:
-        return peaked(list(o), t_k if val else f_k, 0.95)
+        return peaked(list(o), t_k if val else f_k, PRM["logic.mass_exact"])
     yn = yes_no_keys(q)
     if yn:
         ask_false = re.search(r"\b(?:evaluate|evaluates|is it|is this|equal)\b[^.?]*\bfalse\b", text, re.I)
         v = (not val) if ask_false else val
-        return peaked(list(o), [yn[0] if v else yn[1]], 0.95)
+        return peaked(list(o), [yn[0] if v else yn[1]], PRM["logic.mass_exact"])
     return None
 
 
@@ -271,7 +272,7 @@ def propositional(state, q):
     verdict = "follows" if vals == {True} else "contradicted" if vals == {False} else "undetermined"
     km = _verdict_keys(q)
     if km:
-        return peaked(list(q["criteria"]), [km[verdict]], 0.93)
+        return peaked(list(q["criteria"]), [km[verdict]], PRM["logic.mass_inference"])
     yn = yes_no_keys(q) if q["type"] == "choice" else None
     ins = crit_text(q.get("instructions")).lower()
     if q["type"] == "noul" or yn:
@@ -282,13 +283,13 @@ def propositional(state, q):
         else:
             return None
         if q["type"] == "noul":
-            return {"noul": 0.93 if val else 0.07}
-        return peaked(list(q["criteria"]), [yn[0] if val else yn[1]], 0.93)
+            return {"noul": PRM["logic.noul_high"] if val else PRM["logic.noul_low"]}
+        return peaked(list(q["criteria"]), [yn[0] if val else yn[1]], PRM["logic.mass_inference"])
     o = {k: crit_text(v).lower() for k, v in q["criteria"].items()}
     ent = [k for k, v in o.items() if v.strip() in ("entailment", "entailed")]
     non = [k for k, v in o.items() if v.strip() in ("non-entailment", "not entailed", "not entailment")]
     if len(ent) == 1 and len(non) == 1 and len(o) == 2:
-        return peaked(list(o), ent if verdict == "follows" else non, 0.93)
+        return peaked(list(o), ent if verdict == "follows" else non, PRM["logic.mass_inference"])
     return None
 
 
@@ -352,7 +353,7 @@ def truth_tellers(state, q):
     yn = yes_no_keys(q)
     if not yn:
         return None
-    return peaked(list(q["criteria"]), [yn[0] if val else yn[1]], 0.95)
+    return peaked(list(q["criteria"]), [yn[0] if val else yn[1]], PRM["logic.mass_exact"])
 
 
 SOLVERS = (boolean, truth_tellers, propositional)

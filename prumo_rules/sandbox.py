@@ -21,10 +21,11 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from prumo_rules.params import P as PRM
 
-LINES = 1_000_000          # executed lines + calls per run (deterministic budget)
-WALL = 1.0                 # seconds; safety net only (C-level loops the line budget cannot see)
-CPU = 1                    # seconds of CPU (RLIMIT_CPU), safety net only
+LINES = int(PRM["sandbox.lines"])         # executed lines + calls per run (deterministic budget)
+WALL = PRM["sandbox.wall_seconds"]                # seconds; safety net only (C-level loops the line budget cannot see)
+CPU = int(PRM["sandbox.cpu_seconds"])                  # seconds of CPU (RLIMIT_CPU), safety net only
 
 CHILD = r'''
 import sys, os, json, ast, io, contextlib, random
@@ -33,7 +34,7 @@ TMP = os.path.realpath(os.getcwd())
 READ_OK = tuple(os.path.realpath(p) for p in {sys.prefix, sys.base_prefix, sys.exec_prefix, sys.base_exec_prefix, TMP}) + ("/dev/null", "/dev/urandom")
 try:
     import resource
-    for lim, val in ((resource.RLIMIT_CPU, req["cpu"]), (resource.RLIMIT_FSIZE, 1 << 20), (resource.RLIMIT_AS, 2 << 30), (resource.RLIMIT_NPROC, 0)):
+    for lim, val in ((resource.RLIMIT_CPU, req["cpu"]), (resource.RLIMIT_FSIZE, req["fsize"]), (resource.RLIMIT_AS, req["as"]), (resource.RLIMIT_NPROC, 0)):
         try:
             resource.setrlimit(lim, (val, val))
         except (ValueError, OSError):
@@ -187,7 +188,7 @@ def isolation():
 
 def run(req, lines=LINES, wall=WALL):
     """req: {"mode": "output", "code", "call", "candidates"} or {"mode": "tests", "code", "tests", "entry"}."""
-    req = dict(req, lines=lines, cpu=CPU)
+    req = dict(req, lines=lines, cpu=CPU, fsize=int(PRM["sandbox.file_bytes"]), **{"as": int(PRM["sandbox.address_bytes"])})
     with tempfile.TemporaryDirectory(prefix="zr-") as d:
         d = os.path.realpath(d)
         cmd = _os_wrapper(d) + [sys.executable, "-I", "-S", "-B", "-c", CHILD]

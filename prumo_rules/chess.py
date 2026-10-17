@@ -14,27 +14,24 @@ except ImportError:  # the engine still runs without the library; chess question
     chess = None
 
 from prumo_rules.common import from_scores
+from prumo_rules.params import P as PRM
 
-VAL = {1: 100, 2: 320, 3: 330, 4: 500, 5: 900, 6: 0}
+VAL = {i + 1: int(v) for i, v in enumerate(PRM["chess.piece_values"])}
 # hand-written tables, white's view, a8..h8 first row (rank 8) down to rank 1
-PAWN = [0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30, 20, 10, 10, 5, 5, 10, 25, 25, 10, 5, 5,
-        0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10, 0, 0, -10, -5, 5, 5, 10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0]
-KNIGHT = [-50, -40, -30, -30, -30, -30, -40, -50, -40, -20, 0, 0, 0, 0, -20, -40, -30, 0, 10, 15, 15, 10, 0, -30, -30, 5, 15, 20, 20, 15, 5, -30,
-          -30, 0, 15, 20, 20, 15, 0, -30, -30, 5, 10, 15, 15, 10, 5, -30, -40, -20, 0, 5, 5, 0, -20, -40, -50, -40, -30, -30, -30, -30, -40, -50]
-BISHOP = [-20, -10, -10, -10, -10, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 10, 10, 5, 0, -10, -10, 5, 5, 10, 10, 5, 5, -10,
-          -10, 0, 10, 10, 10, 10, 0, -10, -10, 10, 10, 10, 10, 10, 10, -10, -10, 5, 0, 0, 0, 0, 5, -10, -20, -10, -10, -10, -10, -10, -10, -20]
-ROOK = [0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5,
-        -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, 0, 0, 0, 5, 5, 0, 0, 0]
-QUEEN = [-20, -10, -10, -5, -5, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 5, 5, 5, 0, -10, -5, 0, 5, 5, 5, 5, 0, -5,
-         0, 0, 5, 5, 5, 5, 0, -5, -10, 5, 5, 5, 5, 5, 0, -10, -10, 0, 5, 0, 0, 0, 0, -10, -20, -10, -10, -5, -5, -10, -10, -20]
-KING_MID = [-30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30,
-            -30, -40, -40, -50, -50, -40, -40, -30, -20, -30, -30, -40, -40, -30, -30, -20, -10, -20, -20, -20, -20, -20, -20, -10,
-            20, 20, 0, 0, 0, 0, 20, 20, 20, 30, 10, 0, 0, 10, 30, 20]
-KING_END = [-50, -40, -30, -20, -20, -30, -40, -50, -30, -20, -10, 0, 0, -10, -20, -30, -30, -10, 20, 30, 30, 20, -10, -30,
-            -30, -10, 30, 40, 40, 30, -10, -30, -30, -10, 30, 40, 40, 30, -10, -30, -30, -10, 20, 30, 30, 20, -10, -30,
-            -30, -30, 0, 0, 0, 0, -30, -30, -50, -30, -30, -30, -30, -30, -30, -50]
+PAWN = [int(v) for v in PRM["chess.pst.pawn"]]
+KNIGHT = [int(v) for v in PRM["chess.pst.knight"]]
+BISHOP = [int(v) for v in PRM["chess.pst.bishop"]]
+ROOK = [int(v) for v in PRM["chess.pst.rook"]]
+QUEEN = [int(v) for v in PRM["chess.pst.queen"]]
+KING_MID = [int(v) for v in PRM["chess.pst.king_mid"]]
+KING_END = [int(v) for v in PRM["chess.pst.king_end"]]
 PST = {1: PAWN, 2: KNIGHT, 3: BISHOP, 4: ROOK, 5: QUEEN}
-MATE = 100000
+MATE = int(PRM["chess.mate"])
+ENDGAME_MATERIAL = int(PRM["chess.endgame_material"])
+CAPTURE_VICTIM_WEIGHT = int(PRM["chess.capture_victim_weight"])
+CAPTURE_BONUS = int(PRM["chess.capture_bonus"])
+PROMOTION_BONUS = int(PRM["chess.promotion_bonus"])
+QUIESCENCE_DEPTH = int(PRM["chess.quiescence_depth"])
 
 
 def _sq_index(sq, white):
@@ -50,7 +47,7 @@ def evaluate(b):
     major = 0
     for pt, bb in ((2, b.knights), (3, b.bishops), (4, b.rooks), (5, b.queens)):
         major += VAL[pt] * chess.popcount(bb)
-    endgame = major <= 1300
+    endgame = major <= ENDGAME_MATERIAL
     for pt, bb in ((1, b.pawns), (2, b.knights), (3, b.bishops), (4, b.rooks), (5, b.queens), (6, b.kings)):
         table = (KING_END if endgame else KING_MID) if pt == 6 else PST[pt]
         v = VAL[pt]
@@ -68,14 +65,14 @@ def _order(b, moves):
         if b.is_capture(m):
             victim = b.piece_type_at(m.to_square) or 1
             attacker = b.piece_type_at(m.from_square) or 1
-            k += 10 * VAL[victim] - VAL[attacker] + 10000
+            k += CAPTURE_VICTIM_WEIGHT * VAL[victim] - VAL[attacker] + CAPTURE_BONUS
         if m.promotion:
-            k += 9000
+            k += PROMOTION_BONUS
         return -k
     return sorted(moves, key=key)
 
 
-NODES = 7000  # search nodes per question (negamax + quiescence), fixed
+NODES = int(PRM["chess.nodes"])  # search nodes per question (negamax + quiescence), fixed
 
 
 class Search:
@@ -94,7 +91,7 @@ class Search:
         if stand >= beta:
             return beta
         alpha = max(alpha, stand)
-        if depth > 6:
+        if depth > QUIESCENCE_DEPTH:
             return alpha
         caps = list(b.generate_legal_captures())
         caps += [m for m in b.generate_legal_moves(to_mask=chess.BB_BACKRANKS) if m.promotion and not b.is_capture(m)]
@@ -211,5 +208,5 @@ def solve(state, questions):
         if not moves:
             continue
         sc = root_scores(b, list(moves.values()))
-        out[k] = from_scores({key: sc[m] / 100.0 for key, m in moves.items()}, temp=1.0)
+        out[k] = from_scores({key: sc[m] / PRM["chess.score_scale"] for key, m in moves.items()}, temp=PRM["chess.temperature"])
     return out or None

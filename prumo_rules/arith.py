@@ -14,6 +14,7 @@ import re
 from fractions import Fraction
 
 from prumo_rules.common import crit_text, from_scores, main_text, numbers, opt_texts, peaked, to_number
+from prumo_rules.params import P as PRM
 
 # ------------------------------------------------------------------------------------------- exact arithmetic --
 EXPR = re.compile(r"[\d(\-][\d\s+\-*/×÷().]*[\d)]")
@@ -98,13 +99,13 @@ def exact(state, q):
     hits = [k for k, v in nums.items() if abs(v - target) < 1e-9 * max(1.0, abs(target))]
     if len(hits) != 1:
         return None
-    return peaked(list(o), hits, 0.95)
+    return peaked(list(o), hits, PRM["arith.mass"])
 
 
 # ------------------------------------------------------------------------------------------ reachability --
-POOL = 6            # at most this many stated numbers are combined
-MAXK = 4            # at most this many numbers in one derivation
-BUDGET = 60000      # binary operations per question (fixed, deterministic)
+POOL = int(PRM["arith.pool"])           # at most this many stated numbers are combined
+MAXK = int(PRM["arith.max_terms"])           # at most this many numbers in one derivation
+BUDGET = int(PRM["arith.budget"])     # binary operations per question (fixed, deterministic)
 WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
          "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17,
          "eighteen": 18, "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70,
@@ -199,8 +200,8 @@ def derive(state, q):
     if not nums:
         return None
     pool = nums[:POOL]
-    best, full = reachable(pool, min(len(pool), MAXK + (1 if len(pool) <= 5 else 0)))
-    if consts and len(pool) <= 4:
+    best, full = reachable(pool, min(len(pool), MAXK + (1 if len(pool) <= PRM["arith.small_pool"] else 0)))
+    if consts and len(pool) <= PRM["arith.const_pool"]:
         b2, f2 = reachable(pool + consts[:1], len(pool) + 1)
         for v, kk in b2.items():
             if best.get(v, 0) < kk - 1:
@@ -211,15 +212,15 @@ def derive(state, q):
     for o, v in vals.items():
         cands = [_key(v), _key(round(v, 2)), _key(round(v))]
         if any(c in full for c in cands) and _key(v) not in stated:
-            sc[o] = 2.0
+            sc[o] = PRM["arith.score_full"]
         elif _key(v) in stated:
-            sc[o] = 0.3
+            sc[o] = PRM["arith.score_stated"]
         else:
             hit = max((best.get(c, 0) for c in cands), default=0)
-            sc[o] = 0.0 if hit < 2 else 0.5 + 0.2 * hit
+            sc[o] = 0.0 if hit < PRM["arith.min_terms"] else PRM["arith.score_base"] + PRM["arith.score_per_term"] * hit
     if max(sc.values()) <= 0:
         return None
-    return from_scores(sc, temp=0.25)
+    return from_scores(sc, temp=PRM["arith.temperature"])
 
 
 def solve(state, questions):

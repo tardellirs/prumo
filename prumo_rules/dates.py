@@ -12,6 +12,7 @@ import re
 from datetime import date, timedelta
 
 from prumo_rules.common import crit_text, main_text, opt_texts, peaked
+from prumo_rules.params import P as PRM
 
 MONTHS = {m.lower(): i for i, m in enumerate(calendar.month_name) if m}
 MONTHS.update({m.lower(): i for i, m in enumerate(calendar.month_abbr) if m})
@@ -157,5 +158,5 @@ def solve(state, questions):
             continue
         hits = [o for o, d in opts.items() if d == tgt]
         if len(hits) == 1:
-            out[k] = peaked(list(opts), hits, 0.93)
+            out[k] = peaked(list(opts), hits, PRM["dates.mass"])
     return out or None

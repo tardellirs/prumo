@@ -19,6 +19,7 @@ import math
 import re
 
 from prumo_rules.common import crit_text, main_text, opt_texts, peaked, yes_no_keys
+from prumo_rules.params import P as PRM
 
 ORD = {"first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7, "eighth": 8, "ninth": 9,
        "1st": 1, "2nd": 2, "3rd": 3, "4th": 4, "5th": 5, "6th": 6, "7th": 7, "8th": 8}
@@ -26,7 +27,7 @@ NUMW = {"zero": 0, "no": 0, "one": 1, "a": 1, "an": 1, "two": 2, "three": 3, "fo
         "eight": 8, "nine": 9, "ten": 10}
 
 
-def _pick(q, pred, mass=0.95):
+def _pick(q, pred, mass=PRM["puzzles.mass"]):
     o = opt_texts(q)
     hits = [k for k, v in o.items() if pred(v)]
     if not hits or len(hits) == len(o):
@@ -34,7 +35,7 @@ def _pick(q, pred, mass=0.95):
     return peaked(list(o), hits, mass)
 
 
-def _yn(q, val, mass=0.95):
+def _yn(q, val, mass=PRM["puzzles.mass"]):
     yn = yes_no_keys(q)
     return peaked(list(q["criteria"]), [yn[0] if val else yn[1]], mass) if yn else None
 
@@ -182,7 +183,7 @@ def ordering(state, q):
             hits.append(k)
     if len(hits) != 1:
         return None
-    return peaked(list(o), hits, 0.95)
+    return peaked(list(o), hits, PRM["puzzles.mass"])
 
 
 # ------------------------------------------------------------------------------------------- swap tracking --
@@ -312,7 +313,7 @@ def intervals(state, q):
     ok = [k for k, (a, b) in rng.items() if a is not None and b is not None and lo <= a < b <= hi and all(b <= x or a >= y for x, y in busy)]
     if len(ok) != 1:
         return None
-    return peaked(list(o), ok, 0.95)
+    return peaked(list(o), ok, PRM["puzzles.mass"])
 
 
 # ------------------------------------------------------------------------------------------------ SVG path --
@@ -324,7 +325,7 @@ def shapes(state, q):
     d = m.group(1)
     o = opt_texts(q)
     low = {k: v.lower().strip(" .") for k, v in o.items()}
-    pick = lambda names: (peaked(list(o), [k for k, v in low.items() if v in names], 0.95)
+    pick = lambda names: (peaked(list(o), [k for k, v in low.items() if v in names], PRM["puzzles.mass"])
                           if 0 < sum(v in names for v in low.values()) < len(o) else None)
     if re.search(r"(?:^|\s)A\s", " " + d):
         return pick(("sector",) if re.search(r"\bL\b", d) else ("ellipse", "circle"))
@@ -343,10 +344,10 @@ def shapes(state, q):
         dist = lambda p, r: math.hypot(p[0] - r[0], p[1] - r[1])
         sides = [dist(a, b), dist(b, c), dist(c, e), dist(e, a)]
         dot = lambda p, r, t: (p[0] - r[0]) * (t[0] - r[0]) + (p[1] - r[1]) * (t[1] - r[1])
-        if all(abs(dot(x, y, z)) < 1e-2 * max(sides) ** 2 for x, y, z in ((e, a, b), (a, b, c), (b, c, e))):
-            sq = abs(sides[0] - sides[1]) < 1e-2 * max(sides)
+        if all(abs(dot(x, y, z)) < PRM["puzzles.right_angle_tolerance"] * max(sides) ** 2 for x, y, z in ((e, a, b), (a, b, c), (b, c, e))):
+            sq = abs(sides[0] - sides[1]) < PRM["puzzles.right_angle_tolerance"] * max(sides)
             return pick(("square", "rectangle") if sq else ("rectangle",))
-        tol = 0.02 * max(sides)
+        tol = PRM["puzzles.side_tolerance"] * max(sides)
         if (abs(sides[0] - sides[1]) < tol and abs(sides[2] - sides[3]) < tol) or (abs(sides[1] - sides[2]) < tol and abs(sides[3] - sides[0]) < tol):
             return pick(("kite",))
         return pick(("trapezoid", "kite"))
