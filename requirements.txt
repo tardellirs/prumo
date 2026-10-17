@@ -1,0 +1,6 @@
+# Python >= 3.10 (tested on CPython 3.12.13). No GPU, no model weights, no network at inference.
+# The Decision Index kit itself (provides `python -m decision_index` and the Engine base class), edition 0.3:
+#   pip install -e <path to the decision-index kit checkout>        (pyproject: decision-index 0.3)
+# decision-index 0.3 is not on PyPI: pip install -e <decision-index checkout> (see README, How to run)
+# Legal-move generation for the chess capability (pure Python, no engine binary, no NNUE):
+chess==1.11.2
