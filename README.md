@@ -41,7 +41,7 @@ model-index:
 **A decision engine with zero learned parameters. It computes what can be computed and abstains, by construction, from everything else.**
 
 [![Public index](https://img.shields.io/badge/Decision%20Index%200.3-public%2020.14-2a78d6)](#results)
-[![Parameters](https://img.shields.io/badge/learned%20parameters-0-eb6834)](#what-it-is)
+[![Size](https://img.shields.io/badge/size-700%20hand--set%20constants%20%C2%B7%200%20learned-eb6834)](#what-it-is)
 [![Hardware](https://img.shields.io/badge/hardware-1%20CPU%20thread-555)](#latency)
 [![Deterministic](https://img.shields.io/badge/deterministic-bit--identical%20across%20OS-555)](#determinism)
 [![License](https://img.shields.io/badge/license-Apache--2.0-555)](#license)
@@ -89,7 +89,8 @@ it: this much of the public Decision Index is reachable **without learning anyth
 
 | | |
 |---|---|
-| **Kind** | rule-based, symbolic; **0 learned parameters** (please count it as `served_params: 0`) |
+| **Kind** | rule-based, symbolic; **0 learned parameters** |
+| **Size** | **700** hand-written constants (the number to use on a size axis); no weights, no embeddings |
 | **Input / output** | Decision Index wire format: `state` + `questions` (`choice`, `noul`) → a probability for every option |
 | **Runtime** | CPython ≥ 3.10, one CPU thread; dependency: [`chess==1.11.2`](https://pypi.org/project/chess/) (move generation only) |
 | **Code** | ~2.7k lines (`prumo_rules/`), Apache-2.0 |
