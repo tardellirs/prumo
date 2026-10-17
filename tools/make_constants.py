@@ -1,6 +1,6 @@
-"""Build `constants.safetensors`: every hand-set numeric parameter of the engine (F64, standard library only).
+"""Build `model.safetensors`: every hand-set numeric parameter of the engine (F64, standard library only).
 
-    python tools/make_constants.py          # rewrites ../constants.safetensors and prints the parameter count
+    python tools/make_constants.py          # rewrites ../model.safetensors and prints the parameter count
 
 This script is the human-readable source of the numbers; the engine itself only reads the .safetensors file
 (`prumo_rules/params.py`). None of the values was fitted by gradient or estimated from corpus statistics.
@@ -188,5 +188,5 @@ def write(path):
 
 
 if __name__ == "__main__":
-    out = Path(__file__).resolve().parent.parent / "constants.safetensors"
+    out = Path(__file__).resolve().parent.parent / "model.safetensors"
     print(write(out), "parameters ->", out)

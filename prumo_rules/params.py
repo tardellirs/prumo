@@ -1,4 +1,4 @@
-"""The engine's hand-set numeric parameters, loaded from `constants.safetensors` at the repository root.
+"""The engine's hand-set numeric parameters, loaded from `model.safetensors` at the repository root.
 
 Every number that shapes a decision lives in that file, and nothing else:
 - the chess evaluation and search constants;
@@ -15,7 +15,7 @@ import json
 import struct
 from pathlib import Path
 
-FILE = Path(__file__).resolve().parent.parent / "constants.safetensors"
+FILE = Path(__file__).resolve().parent.parent / "model.safetensors"
 
 
 def _load(path=FILE):

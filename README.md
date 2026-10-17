@@ -90,7 +90,7 @@ it: this much of the public Decision Index is reachable **without learning anyth
 | | |
 |---|---|
 | **Kind** | rule-based, symbolic; **0 learned parameters** |
-| **Size** | **527** hand-set numeric parameters, all in [`constants.safetensors`](constants.safetensors) (the size the Hub reports); no weights, no embeddings |
+| **Size** | **527** hand-set numeric parameters, all in [`model.safetensors`](model.safetensors) (the size the Hub reports); no weights, no embeddings |
 | **Input / output** | Decision Index wire format: `state` + `questions` (`choice`, `noul`) → a probability for every option |
 | **Runtime** | CPython ≥ 3.10, one CPU thread; dependency: [`chess==1.11.2`](https://pypi.org/project/chess/) (move generation only) |
 | **Code** | ~2.7k lines (`prumo_rules/`), Apache-2.0 |
@@ -272,7 +272,7 @@ They pass on macOS and on Linux.
 ## Transparency
 
 - **No learned values.** Every number that shapes a decision is one of the **527 hand-set parameters** in
-  [`constants.safetensors`](constants.safetensors). The engine loads them at start-up (`prumo_rules/params.py`, standard
+  [`model.safetensors`](model.safetensors). The engine loads them at start-up (`prumo_rules/params.py`, standard
   library only, F64, so the values are bit-exact). [`tools/make_constants.py`](tools/make_constants.py) is their
   human-readable source, with a comment on each. The file holds:
   - 454 chess values: piece values plus seven textbook piece-square tables;
@@ -281,7 +281,8 @@ They pass on macOS and on Linux.
   - BM25 `k1 = 1.2`, `b = 0.75`;
   - every threshold, weight, temperature and confidence mass.
 
-  The file is not a model; it is the engine's configuration, kept where the size can be counted. Word lists (stop
+  The file is named `model.safetensors` so that the Hub counts it, but it is not a trained model: it is the engine's
+  configuration, kept where the size can be counted. Word lists (stop
   words, phrase lists, month and number words) and structural constants (board geometry, the calendar, the 12 pitch
   classes, text-length limits) stay in code. The thresholds that could not be fixed a priori were chosen on **training/dev splits** of the source datasets and
   on our own panels, never on the public test.
