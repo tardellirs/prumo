@@ -7,6 +7,10 @@
 [![Hardware](https://img.shields.io/badge/hardware-1%20CPU%20thread-555)](#latency)
 [![Deterministic](https://img.shields.io/badge/deterministic-bit--identical%20across%20OS-555)](#determinism)
 [![License](https://img.shields.io/badge/license-Apache--2.0-555)](#license)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-tardellirs%2Fprumo-FFD21E)](https://huggingface.co/tardellirs/prumo)
+[![GitHub](https://img.shields.io/badge/GitHub-tardellirs%2Fprumo-181717?logo=github)](https://github.com/tardellirs/prumo)
+
+**Model page:** [huggingface.co/tardellirs/prumo](https://huggingface.co/tardellirs/prumo) · **Code:** [github.com/tardellirs/prumo](https://github.com/tardellirs/prumo)
 
 *Prumo* is Portuguese for **plumb line**: a tool that is exact without learning anything.
 
