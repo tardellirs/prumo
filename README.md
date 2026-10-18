@@ -283,7 +283,7 @@ bundled.
 ```bibtex
 @software{prumo2026,
   title  = {Prumo: a zero-parameter rule-based decision engine},
-  author = {tardellirs},
+  author = {Tardelli Stekel},
   year   = {2026},
   url    = {https://huggingface.co/tardellirs/prumo}
 }
