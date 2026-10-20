@@ -2,7 +2,8 @@
 
 **A decision engine with zero learned parameters. It computes what can be computed and abstains, by construction, from everything else.**
 
-[![Public index](https://img.shields.io/badge/Decision%20Index%200.3-public%2020.14-2a78d6)](#results)
+[![Full score](https://img.shields.io/badge/Full%20score%200.4-12.21-2a78d6)](#decision-index-04--full-score-board)
+[![Public index](https://img.shields.io/badge/public%20index%20%28not%20counted%29-20.14-6c8ebf)](#results)
 [![Size](https://img.shields.io/badge/size-527%20hand--set%20parameters%20%C2%B7%200%20learned-eb6834)](#what-it-is)
 [![Hardware](https://img.shields.io/badge/hardware-1%20CPU%20thread-555)](#latency)
 [![Deterministic](https://img.shields.io/badge/deterministic-bit--identical%20across%20OS-555)](#determinism)
@@ -34,7 +35,9 @@ it: this much of the public Decision Index is reachable **without learning anyth
 
 ## Highlights
 
-- **Public index 20.14** on the Decision Index 0.3, from a complete run of the official kit (140,178 requests). For
+- **Full score 12.21** on the Decision Index 0.4 (maintainer-run private tests: same skills 15.78, new domains
+  5.60), above Crivo-17M (11.11), a learned 17M-parameter model.
+- **Public index 20.14** on the Decision Index 0.3 (shown on the board, not counted in 0.4), from a complete run of the official kit (140,178 requests). For
   reference, the other rule-based entrant scores 1.55, and learned models of 17M and 68M parameters score 7.44 and
   13.01.
 - **Exact where it applies:**
@@ -91,8 +94,8 @@ one response format for every request.
 ## Results
 
 Decision Index **0.3 public suite**, run **once** with this exact code through the official kit (`pipeline --edition
-0.3`; `complete: true`, all 140,178 requests answered). The public suite is 20% of the board's Full score. The
-remaining 80% (private same-skill tests and private new-domain tasks) is run by the maintainers.
+0.3`; `complete: true`, all 140,178 requests answered). In edition 0.4 the board shows this public
+index, but the Full score comes only from the maintainers' private tests ([below](#decision-index-04--full-score-board)).
 
 **Public index 20.14** (raw 38.96). Skill per area, chance-corrected:
 
@@ -138,9 +141,34 @@ HLE, …) is at chance, as intended.
 | Bekko System One v0 68M | 68M | 13.01 |
 | Bekko System One v0 400M | 400M | 22.45 |
 
-The Full score will be the maintainers' measurement. Below the learned models, Prumo's private parts depend on how
-often its structures recur. The same-skill tests are expected to keep most of the exact capabilities. The new-domain
-tasks are expected to stay mostly at chance, because the engine claims almost nothing it does not recognise.
+### Decision Index 0.4 — Full score (board)
+
+Scored by the maintainers on the [board](https://huggingface.co/spaces/multimodalart/jev-decision-index) in the Decision Index 0.4 batch of 2026-10-20. In edition 0.4 the Full score is **0.60 × private tests of the same skills + 0.40 × private tasks from new domains**, both mapped onto the public scale using untuned stock models. The public index is still run and shown, but it no longer counts toward the Full score, and the new-domain tasks were revised. Edition 0.3.2 (0.20 public + 0.50 same skills + 0.30 new domains) stays available as an archive. Models within 0.9 points of the first model of a group share a rank group.
+
+| Full score 0.4 | Private same skills | Private new domains | Public index (shown, not counted) | Board latency, median / p95 (1× RTX PRO 6000) | Rank group |
+|---:|---:|---:|---:|---|---:|
+| **12.21** | 15.78 | 5.60 | 20.14 | 0.3 / 11.5 ms | 46 of 54 |
+
+Rank group 46 is shared with Intern-Decision-0.8B (Full 12.67), Tev1-0.8B-experimental (Full 12.63) and Jev-Style 0.8B v3 (Full 12.07).
+
+With zero learned parameters, Prumo scores above [Crivo-17M](https://huggingface.co/tardellirs/crivo-17m) (11.11, a
+17M-parameter learned encoder). The board classes Prumo as an inference technique and, since it has no base model,
+lists no parameter count for it, so it does not appear on the board's size chart.
+
+**Compared with small and rule-based entries** (board, Decision Index 0.4):
+
+| Model | Parameters | Full 0.4 | Same skills | New domains |
+|---|---:|---:|---:|---:|
+| **Prumo** | not listed (0 learned) | **12.21** | 15.78 | 5.60 |
+| Zev | not listed (0 learned) | 1.91 | 1.79 | 1.89 |
+| [Crivo-17M](https://huggingface.co/tardellirs/crivo-17m) | 16.9M | 11.11 | 15.88 | 3.22 |
+| [Bekko System One v0 17M](https://huggingface.co/hotchpotch/bekko-system-one-v0-17m) | 17.0M | 5.72 | 5.89 | 4.61 |
+| [Crivo-32M v2](https://huggingface.co/tardellirs/crivo-32m) | 32.0M | 13.70 | 18.44 | 5.34 |
+| [Bekko System One v0 68M](https://huggingface.co/hotchpotch/bekko-system-one-v0-68m) | 68.0M | 9.99 | 12.62 | 4.98 |
+| [Mola-68M](https://huggingface.co/codavidgarcia/mola-68m) | 68.3M | 14.96 | 21.99 | 3.52 |
+
+On the private tests the exact capabilities transfer only in part: the same-skill score (15.78) is below the public
+index (20.14), and on the private tasks from new domains Prumo scores 5.60 (Zev, the other rule-based entry, 1.89).
 
 ### Latency
 
